@@ -66,7 +66,14 @@ body {
 
 .square.move-target {
   background-color: yellow !important;
+}
+
+.square.light.move-target {
   color: rgba(0, 0, 0, 0.55);
+}
+
+.square.dark.move-target {
+  color: white;
 }
 
 .square.selected {
