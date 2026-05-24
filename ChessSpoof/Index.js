@@ -248,7 +248,7 @@ class Knight {
     this.Function = KnightMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
-    this.value = 3;
+    this.value = 8;
     this.player = player;
   }
 }
@@ -259,7 +259,7 @@ class Bishop {
     this.Function = NoMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
-    this.value = 3;
+    this.value = 2;
     this.player = player;
   }
 }
@@ -270,7 +270,7 @@ class Queen {
     this.Function = NoMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
-    this.value = 9;
+    this.value = 15;
     this.player = player;
   }
 }
@@ -281,7 +281,7 @@ class King {
     this.Function = NoMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
-    this.value = 0;
+    this.value = 12;
     this.player = player;
   }
 }
