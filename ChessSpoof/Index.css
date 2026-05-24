@@ -97,6 +97,7 @@ body {
 }
 
 .square {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -116,14 +117,31 @@ body {
 
 .square.move-target {
   background-color: yellow !important;
+  color: transparent;
 }
 
-.square.light.move-target {
-  color: rgba(0, 0, 0, 0.55);
+.square.move-target::before {
+  content: attr(data-position);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.square.dark.move-target {
+.square.light.move-target::before {
+  color: rgba(0, 0, 0, 0.75);
+  text-shadow: 0 0 6px yellow, 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.square.dark.move-target::before {
   color: white;
+  text-shadow: 0 0 6px yellow, 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .square.selected {
@@ -150,6 +168,8 @@ body {
 }
 
 .piece {
+  position: relative;
+  z-index: 1;
   width: 96%;
   height: 96%;
   object-fit: contain;
