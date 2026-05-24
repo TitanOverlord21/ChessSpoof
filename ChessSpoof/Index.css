@@ -157,6 +157,11 @@ body {
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
 }
 
+.piece.pawn {
+  width: 67%;
+  height: 67%;
+}
+
 .rules-panel {
   width: 100%;
   padding: 1rem 1.25rem 1.25rem;

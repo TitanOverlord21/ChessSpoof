@@ -384,7 +384,7 @@ for (const piece of Pieces) {
   square.textContent = "";
 
   const img = document.createElement("img");
-  img.className = "piece";
+  img.className = piece.name === "Pawn" ? "piece pawn" : "piece";
   img.src = piece.image;
   img.alt = piece.name;
   square.appendChild(img);
