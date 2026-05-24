@@ -176,13 +176,63 @@ function movePieceToSquare(piece, newSquareId) {
 
 function NoMove() {}
 
+function collectRayTargets(rowIndex, colIndex, rowStep, colStep, piece) {
+  const squareIds = [];
+  let nextRowIndex = rowIndex + rowStep;
+  let nextColIndex = colIndex + colStep;
+
+  while (true) {
+    const squareId = squareIdFromIndices(nextRowIndex, nextColIndex);
+    if (!squareId) {
+      break;
+    }
+
+    const square = squaresById[squareId];
+    squareIds.push(squareId);
+    if (square.piece) {
+      break;
+    }
+
+    nextRowIndex += rowStep;
+    nextColIndex += colStep;
+  }
+
+  return squareIds;
+}
+
 function RookMove(currentSquare, piece) {
   const { row, col } = parseSquare(currentSquare);
-  const squareIds = [];
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const squareIds = [
+    ...collectRayTargets(rowIndex, colIndex, 1, 0, piece),
+    ...collectRayTargets(rowIndex, colIndex, -1, 0, piece),
+    ...collectRayTargets(rowIndex, colIndex, 0, 1, piece),
+    ...collectRayTargets(rowIndex, colIndex, 0, -1, piece),
+  ];
 
-  for (const squareId of Object.keys(squaresById)) {
-    const { row: squareRow, col: squareCol } = parseSquare(squareId);
-    if (squareRow === row || squareCol === col) {
+  setMoveTargets(piece, squareIds);
+}
+
+function PawnMove(currentSquare, piece) {
+  const { row, col } = parseSquare(currentSquare);
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const squareIds = [];
+  const directions = [
+    [2, 0],
+    [-2, 0],
+    [0, 2],
+    [0, -2],
+    [2, 2],
+    [2, -2],
+    [-2, 2],
+    [-2, -2],
+  ];
+
+  for (const [rowDelta, colDelta] of directions) {
+    const squareId = squareIdFromIndices(rowIndex + rowDelta, colIndex + colDelta);
+    if (squareId) {
       squareIds.push(squareId);
     }
   }
@@ -223,7 +273,7 @@ function KnightMove(currentSquare, piece) {
 class Pawn {
   constructor(player, startingSquare, imageFile) {
     this.name = "Pawn";
-    this.Function = NoMove;
+    this.Function = PawnMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
     this.value = 1;
