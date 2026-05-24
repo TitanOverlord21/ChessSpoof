@@ -5,6 +5,41 @@ const IMAGE_PATH = "assets/PNGs/";
 const board = document.getElementById("board");
 const squaresById = {};
 let pendingMove = null;
+let gameOver = false;
+
+function getPlayerScore(player) {
+  return Pieces.reduce((total, piece) => {
+    if (piece.player === player) {
+      return total + piece.value;
+    }
+
+    return total;
+  }, 0);
+}
+
+function updateScoreDisplay() {
+  for (const player of Players) {
+    const scoreElement = document.getElementById(`score-${player.toLowerCase()}`);
+    if (scoreElement) {
+      scoreElement.textContent = String(getPlayerScore(player));
+    }
+  }
+}
+
+function checkForWinner() {
+  if (gameOver) {
+    return;
+  }
+
+  for (const player of Players) {
+    if (getPlayerScore(player) <= 5) {
+      const winner = Players.find((otherPlayer) => otherPlayer !== player);
+      gameOver = true;
+      alert(`${winner} wins!`);
+      return;
+    }
+  }
+}
 
 function parseSquare(squareId) {
   return {
@@ -96,6 +131,8 @@ function removePieceFromSquare(square) {
   square.piece = null;
   square.classList.remove("occupied");
   square.textContent = square.id;
+  updateScoreDisplay();
+  checkForWinner();
 }
 
 function movePieceToSquare(piece, newSquareId) {
@@ -198,7 +235,7 @@ class Knight {
     this.Function = KnightMove;
     this.image = `${IMAGE_PATH}BlackKnight.png`;
     this.CurrentSquare = "F7";
-    this.value = 3;
+    this.value = 8;
     this.player = "Black";
   }
 }
@@ -284,3 +321,5 @@ for (const piece of Pieces) {
   img.alt = piece.name;
   square.appendChild(img);
 }
+
+updateScoreDisplay();
