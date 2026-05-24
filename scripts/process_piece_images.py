@@ -22,7 +22,58 @@ PIECE_FILES = {
 }
 
 
-def remove_background(img: Image.Image, tolerance: int = 28) -> Image.Image:
+def remove_background_white(img: Image.Image, tolerance: int = 18) -> Image.Image:
+    img = img.convert("RGBA")
+    pixels = img.load()
+    width, height = img.size
+
+    corner_colors = [
+        pixels[0, 0][:3],
+        pixels[width - 1, 0][:3],
+        pixels[0, height - 1][:3],
+        pixels[width - 1, height - 1][:3],
+    ]
+
+    def is_background(rgb):
+        r, g, b = rgb
+        brightness = (r + g + b) / 3
+        is_neutral = max(r, g, b) - min(r, g, b) < 30
+        if not is_neutral:
+            return False
+        if brightness > 245:
+            return True
+        return any(
+            abs(r - c[0]) <= tolerance
+            and abs(g - c[1]) <= tolerance
+            and abs(b - c[2]) <= tolerance
+            for c in corner_colors
+        )
+
+    seen = set()
+    queue = deque()
+    for x in range(width):
+        queue.append((x, 0))
+        queue.append((x, height - 1))
+    for y in range(height):
+        queue.append((0, y))
+        queue.append((width - 1, y))
+
+    while queue:
+        x, y = queue.popleft()
+        if (x, y) in seen:
+            continue
+        seen.add((x, y))
+        if not is_background(pixels[x, y][:3]):
+            continue
+        pixels[x, y] = (0, 0, 0, 0)
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < width and 0 <= ny < height:
+                queue.append((nx, ny))
+
+    return img
+
+
+def remove_background_black(img: Image.Image, tolerance: int = 28) -> Image.Image:
     img = img.convert("RGBA")
     pixels = img.load()
     width, height = img.size
@@ -77,6 +128,21 @@ def remove_background(img: Image.Image, tolerance: int = 28) -> Image.Image:
     return img
 
 
+def solidify_alpha(img: Image.Image, alpha_cutoff: int = 64) -> Image.Image:
+    pixels = img.load()
+    width, height = img.size
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            if a >= alpha_cutoff:
+                pixels[x, y] = (r, g, b, 255)
+            else:
+                pixels[x, y] = (0, 0, 0, 0)
+
+    return img
+
+
 def crop_and_pad(img: Image.Image, pad: int = 8) -> Image.Image:
     bbox = img.getbbox()
     if bbox:
@@ -87,9 +153,13 @@ def crop_and_pad(img: Image.Image, pad: int = 8) -> Image.Image:
     return padded
 
 
-def process_piece(src: Path, dest: Path) -> None:
+def process_piece(src: Path, dest: Path, *, white: bool = False) -> None:
     img = Image.open(src)
-    img = remove_background(img)
+    if white:
+        img = remove_background_white(img)
+        img = solidify_alpha(img)
+    else:
+        img = remove_background_black(img)
     img = crop_and_pad(img)
     img.save(dest)
     print(f"Saved {dest.name}: {img.size}")
@@ -101,7 +171,7 @@ def main() -> None:
     for filename, source in PIECE_FILES.items():
         if not source.exists():
             raise FileNotFoundError(f"Missing source image: {source}")
-        process_piece(source, OUTPUT_DIR / filename)
+        process_piece(source, OUTPUT_DIR / filename, white=filename.startswith("White"))
 
 
 if __name__ == "__main__":
