@@ -25,6 +25,31 @@ function clearMoveHighlights() {
   pendingMove = null;
 }
 
+function squareIdFromIndices(rowIndex, colIndex) {
+  if (rowIndex < 0 || rowIndex >= ROWS.length || colIndex < 0 || colIndex >= COLS.length) {
+    return null;
+  }
+
+  return `${ROWS[rowIndex]}${COLS[colIndex]}`;
+}
+
+function setMoveTargets(piece, squareIds) {
+  clearMoveHighlights();
+
+  const highlightedSquares = [];
+
+  for (const squareId of squareIds) {
+    if (!squaresById[squareId]) {
+      continue;
+    }
+
+    squaresById[squareId].classList.add("move-target");
+    highlightedSquares.push(squareId);
+  }
+
+  pendingMove = { piece, highlightedSquares };
+}
+
 function movePieceToSquare(piece, newSquareId) {
   const oldSquare = squaresById[piece.CurrentSquare];
   const newSquare = squaresById[newSquareId];
@@ -48,20 +73,47 @@ function movePieceToSquare(piece, newSquareId) {
 }
 
 function RookMove(currentSquare, piece) {
-  clearMoveHighlights();
-
   const { row, col } = parseSquare(currentSquare);
-  const highlightedSquares = [];
+  const squareIds = [];
 
   for (const squareId of Object.keys(squaresById)) {
     const { row: squareRow, col: squareCol } = parseSquare(squareId);
     if (squareRow === row || squareCol === col) {
-      squaresById[squareId].classList.add("move-target");
-      highlightedSquares.push(squareId);
+      squareIds.push(squareId);
     }
   }
 
-  pendingMove = { piece, highlightedSquares };
+  setMoveTargets(piece, squareIds);
+}
+
+function KnightMove(currentSquare, piece) {
+  const { row, col } = parseSquare(currentSquare);
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const squareIds = [];
+  const directions = [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+
+  for (const [rowStep, colStep] of directions) {
+    for (let distance = 1; distance <= 3; distance += 1) {
+      const squareId = squareIdFromIndices(
+        rowIndex + rowStep * distance,
+        colIndex + colStep * distance,
+      );
+
+      if (!squareId) {
+        break;
+      }
+
+      squareIds.push(squareId);
+    }
+  }
+
+  setMoveTargets(piece, squareIds);
 }
 
 class Rook {
@@ -75,8 +127,19 @@ class Rook {
   }
 }
 
+class Knight {
+  constructor() {
+    this.name = "Knight";
+    this.Function = KnightMove;
+    this.image = `${IMAGE_PATH}BlackKnight.png`;
+    this.CurrentSquare = "F7";
+    this.value = 3;
+    this.player = "Black";
+  }
+}
+
 const Players = ["White", "Black"];
-const Pieces = [Rook].map((PieceClass) => new PieceClass());
+const Pieces = [Rook, Knight].map((PieceClass) => new PieceClass());
 
 for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
   const rowLabel = ROWS[rowIndex];
