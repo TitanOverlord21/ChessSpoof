@@ -64,13 +64,13 @@ body {
   transition: background-color 0.15s ease;
 }
 
-.square:hover:not(.selected) {
+.square:hover {
   filter: brightness(1.08);
 }
 
-.square.selected {
-  background-color: red !important;
-  color: white;
+.square.move-target {
+  background-color: yellow !important;
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .square.light {
