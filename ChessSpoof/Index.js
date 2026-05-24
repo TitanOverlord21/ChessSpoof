@@ -174,6 +174,8 @@ function movePieceToSquare(piece, newSquareId) {
   piece.CurrentSquare = newSquareId;
 }
 
+function NoMove() {}
+
 function RookMove(currentSquare, piece) {
   const { row, col } = parseSquare(currentSquare);
   const squareIds = [];
@@ -218,30 +220,94 @@ function KnightMove(currentSquare, piece) {
   setMoveTargets(piece, squareIds);
 }
 
+class Pawn {
+  constructor(player, startingSquare, imageFile) {
+    this.name = "Pawn";
+    this.Function = NoMove;
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
+    this.value = 1;
+    this.player = player;
+  }
+}
+
 class Rook {
-  constructor() {
+  constructor(player, startingSquare, imageFile) {
     this.name = "Rook";
     this.Function = RookMove;
-    this.image = `${IMAGE_PATH}BlackRook.png`;
-    this.CurrentSquare = "H8";
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
     this.value = 5;
-    this.player = "Black";
+    this.player = player;
   }
 }
 
 class Knight {
-  constructor() {
+  constructor(player, startingSquare, imageFile) {
     this.name = "Knight";
     this.Function = KnightMove;
-    this.image = `${IMAGE_PATH}BlackKnight.png`;
-    this.CurrentSquare = "F7";
-    this.value = 8;
-    this.player = "Black";
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
+    this.value = 3;
+    this.player = player;
+  }
+}
+
+class Bishop {
+  constructor(player, startingSquare, imageFile) {
+    this.name = "Bishop";
+    this.Function = NoMove;
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
+    this.value = 3;
+    this.player = player;
+  }
+}
+
+class Queen {
+  constructor(player, startingSquare, imageFile) {
+    this.name = "Queen";
+    this.Function = NoMove;
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
+    this.value = 9;
+    this.player = player;
+  }
+}
+
+class King {
+  constructor(player, startingSquare, imageFile) {
+    this.name = "King";
+    this.Function = NoMove;
+    this.image = `${IMAGE_PATH}${imageFile}`;
+    this.CurrentSquare = startingSquare;
+    this.value = 0;
+    this.player = player;
   }
 }
 
 const Players = ["White", "Black"];
-const Pieces = [Rook, Knight].map((PieceClass) => new PieceClass());
+
+const Pieces = [
+  new Rook("White", "A1", "WhiteRook.png"),
+  new Knight("White", "B1", "WhiteKnight.png"),
+  new Bishop("White", "C1", "WhiteBishop.png"),
+  new Queen("White", "D1", "WhiteQueen.png"),
+  new King("White", "E1", "WhiteKing.png"),
+  new Bishop("White", "F1", "WhiteBishop.png"),
+  new Knight("White", "G1", "WhiteKnight.png"),
+  new Rook("White", "H1", "WhiteRook.png"),
+  ...COLS.map((col) => new Pawn("White", `B${col}`, "WhitePawn.png")),
+  new Rook("Black", "A8", "BlackRook.png"),
+  new Knight("Black", "B8", "BlackKnight.png"),
+  new Bishop("Black", "C8", "BlackBishop.png"),
+  new Queen("Black", "D8", "BlackQueen.png"),
+  new King("Black", "E8", "BlackKing.png"),
+  new Bishop("Black", "F8", "BlackBishop.png"),
+  new Knight("Black", "G8", "BlackKnight.png"),
+  new Rook("Black", "H8", "BlackRook.png"),
+  ...COLS.map((col) => new Pawn("Black", `G${col}`, "BlackPawn.png")),
+];
 
 for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
   const rowLabel = ROWS[rowIndex];
