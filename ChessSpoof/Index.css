@@ -60,8 +60,13 @@ body {
   transition: filter 0.15s ease, box-shadow 0.15s ease;
 }
 
-.square:hover:not(.selected) {
+.square:hover:not(.move-target) {
   filter: brightness(1.06);
+}
+
+.square.move-target {
+  background-color: yellow !important;
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .square.selected {
