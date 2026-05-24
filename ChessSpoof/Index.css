@@ -23,7 +23,7 @@ body {
 .board-unit {
   display: inline-flex;
   flex-direction: column;
-  transform: rotateX(20deg);
+  transform: rotateX(28deg);
   transform-style: preserve-3d;
   box-shadow:
     0 28px 48px rgba(0, 0, 0, 0.55),
