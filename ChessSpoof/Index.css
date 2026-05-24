@@ -15,7 +15,7 @@ body {
       rgba(75, 0, 130, 0.3),
       rgba(238, 130, 238, 0.3)
     ),
-    url("assets/techno-chess-board.png") center / cover no-repeat fixed;
+    url("assets/PNGs/techno-chess-board.png") center / cover no-repeat fixed;
 }
 
 .board-wrapper {
@@ -79,4 +79,15 @@ body {
 
 .square.dark {
   background-color: #b58863;
+}
+
+.square.occupied {
+  color: transparent;
+}
+
+.piece {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  pointer-events: none;
 }
