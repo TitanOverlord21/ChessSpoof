@@ -50,7 +50,72 @@ function setMoveTargets(piece, squareIds) {
   pendingMove = { piece, highlightedSquares };
 }
 
+function getDiagonalPath(fromSquareId, toSquareId) {
+  const fromRowIndex = ROWS.indexOf(parseSquare(fromSquareId).row);
+  const fromColIndex = COLS.indexOf(parseSquare(fromSquareId).col);
+  const toRowIndex = ROWS.indexOf(parseSquare(toSquareId).row);
+  const toColIndex = COLS.indexOf(parseSquare(toSquareId).col);
+  const rowDelta = toRowIndex - fromRowIndex;
+  const colDelta = toColIndex - fromColIndex;
+
+  if (rowDelta === 0 || Math.abs(rowDelta) !== Math.abs(colDelta)) {
+    return null;
+  }
+
+  const rowStep = rowDelta / Math.abs(rowDelta);
+  const colStep = colDelta / Math.abs(colDelta);
+  const path = [];
+  const steps = Math.abs(rowDelta);
+
+  for (let step = 1; step <= steps; step += 1) {
+    const squareId = squareIdFromIndices(fromRowIndex + rowStep * step, fromColIndex + colStep * step);
+    if (squareId) {
+      path.push(squareId);
+    }
+  }
+
+  return path;
+}
+
+function removePieceFromSquare(square) {
+  if (!square || !square.piece) {
+    return;
+  }
+
+  const capturedPiece = square.piece;
+  const capturedImage = square.querySelector(".piece");
+  if (capturedImage) {
+    capturedImage.remove();
+  }
+
+  const pieceIndex = Pieces.indexOf(capturedPiece);
+  if (pieceIndex !== -1) {
+    Pieces.splice(pieceIndex, 1);
+  }
+
+  square.piece = null;
+  square.classList.remove("occupied");
+  square.textContent = square.id;
+}
+
 function movePieceToSquare(piece, newSquareId) {
+  const path =
+    piece.name === "Knight" ? getDiagonalPath(piece.CurrentSquare, newSquareId) : null;
+
+  if (path) {
+    for (const squareId of path) {
+      const square = squaresById[squareId];
+      if (square.piece && square.piece !== piece) {
+        removePieceFromSquare(square);
+      }
+    }
+  } else {
+    const destinationSquare = squaresById[newSquareId];
+    if (destinationSquare.piece && destinationSquare.piece !== piece) {
+      removePieceFromSquare(destinationSquare);
+    }
+  }
+
   const oldSquare = squaresById[piece.CurrentSquare];
   const newSquare = squaresById[newSquareId];
   const img = oldSquare.querySelector(".piece");
