@@ -302,6 +302,58 @@ function QueenMove(currentSquare, piece) {
   setMoveTargets(piece, squareIds);
 }
 
+function KingMove(currentSquare, piece) {
+  const { row, col } = parseSquare(currentSquare);
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const borderDirections = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+  const targetSquareIds = new Set();
+
+  for (const [rowDelta, colDelta] of borderDirections) {
+    const adjacentSquareId = squareIdFromIndices(rowIndex + rowDelta, colIndex + colDelta);
+    if (!adjacentSquareId) {
+      continue;
+    }
+
+    const adjacentSquare = squaresById[adjacentSquareId];
+    if (!adjacentSquare.piece) {
+      continue;
+    }
+
+    const { row: adjacentRow, col: adjacentCol } = parseSquare(adjacentSquareId);
+    const adjacentRowIndex = ROWS.indexOf(adjacentRow);
+    const adjacentColIndex = COLS.indexOf(adjacentCol);
+
+    for (const [nearRowDelta, nearColDelta] of borderDirections) {
+      const targetSquareId = squareIdFromIndices(
+        adjacentRowIndex + nearRowDelta,
+        adjacentColIndex + nearColDelta,
+      );
+      if (!targetSquareId || targetSquareId === currentSquare) {
+        continue;
+      }
+
+      const targetSquare = squaresById[targetSquareId];
+      if (targetSquare.piece && targetSquare.piece.player === piece.player) {
+        continue;
+      }
+
+      targetSquareIds.add(targetSquareId);
+    }
+  }
+
+  setMoveTargets(piece, [...targetSquareIds]);
+}
+
 class Pawn {
   constructor(player, startingSquare, imageFile) {
     this.name = "Pawn";
@@ -360,7 +412,7 @@ class Queen {
 class King {
   constructor(player, startingSquare, imageFile) {
     this.name = "King";
-    this.Function = NoMove;
+    this.Function = KingMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
     this.value = 12;
