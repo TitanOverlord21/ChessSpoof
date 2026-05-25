@@ -270,6 +270,38 @@ function KnightMove(currentSquare, piece) {
   setMoveTargets(piece, squareIds);
 }
 
+function QueenMove(currentSquare, piece) {
+  const { row, col } = parseSquare(currentSquare);
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const squareIds = [];
+  const borderDirections = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+
+  for (const [rowDelta, colDelta] of borderDirections) {
+    const squareId = squareIdFromIndices(rowIndex + rowDelta, colIndex + colDelta);
+    if (squareId) {
+      squareIds.push(squareId);
+    }
+  }
+
+  const mirroredCol = 9 - col;
+  const mirroredSquareId = `${row}${mirroredCol}`;
+  if (mirroredSquareId !== currentSquare && squaresById[mirroredSquareId]) {
+    squareIds.push(mirroredSquareId);
+  }
+
+  setMoveTargets(piece, squareIds);
+}
+
 class Pawn {
   constructor(player, startingSquare, imageFile) {
     this.name = "Pawn";
@@ -317,7 +349,7 @@ class Bishop {
 class Queen {
   constructor(player, startingSquare, imageFile) {
     this.name = "Queen";
-    this.Function = NoMove;
+    this.Function = QueenMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
     this.value = 15;
