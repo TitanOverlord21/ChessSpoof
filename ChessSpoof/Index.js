@@ -240,6 +240,32 @@ function PawnMove(currentSquare, piece) {
   setMoveTargets(piece, squareIds);
 }
 
+function BishopMove(currentSquare, piece) {
+  const { row, col } = parseSquare(currentSquare);
+  const rowIndex = ROWS.indexOf(row);
+  const colIndex = COLS.indexOf(col);
+  const squareIds = [];
+  const directions = [
+    [2, 0],
+    [-2, 0],
+    [0, 2],
+    [0, -2],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+
+  for (const [rowDelta, colDelta] of directions) {
+    const squareId = squareIdFromIndices(rowIndex + rowDelta, colIndex + colDelta);
+    if (squareId) {
+      squareIds.push(squareId);
+    }
+  }
+
+  setMoveTargets(piece, squareIds);
+}
+
 function KnightMove(currentSquare, piece) {
   const { row, col } = parseSquare(currentSquare);
   const rowIndex = ROWS.indexOf(row);
@@ -390,7 +416,7 @@ class Knight {
 class Bishop {
   constructor(player, startingSquare, imageFile) {
     this.name = "Bishop";
-    this.Function = NoMove;
+    this.Function = BishopMove;
     this.image = `${IMAGE_PATH}${imageFile}`;
     this.CurrentSquare = startingSquare;
     this.value = 2;
