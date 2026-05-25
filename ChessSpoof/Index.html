@@ -26,13 +26,16 @@
     <details class="rules-panel">
       <summary class="rules-heading">How to Play</summary>
       <ul class="rules-list">
-        <li>Click a piece to highlight where it can move (yellow squares with square labels). Click a highlighted square to move there, or click anywhere else to cancel.</li>
-        <li><strong>Rook:</strong> Moves in straight lines along its row or column. It may pass through empty squares but stops at the first piece it reaches, which it can capture.</li>
-        <li><strong>Knight:</strong> Moves diagonally up to three squares in any of the four diagonal directions. Any enemy pieces along that diagonal path are captured.</li>
-        <li><strong>Pawn:</strong> Jumps exactly two squares away in any horizontal, vertical, or diagonal direction (eight possible landing squares).</li>
-        <li><strong>Bishop, Queen, and King:</strong> Cannot move yet.</li>
-        <li>When a piece lands on an enemy, that piece is captured and removed (knights also capture enemies along their travel path).</li>
-        <li>Each player’s score is the total value of their remaining pieces (Pawn 1, Bishop 2, Rook 5, Knight 8, King 12, Queen 15). You win when your opponent’s score drops to 5 or below.</li>
+        <li>Click a piece to highlight where it can move (yellow squares). Click a highlighted square to move there, or click anywhere else to cancel.</li>
+        <li>Squares are labeled with a letter (A–H, bottom to top) and a number (1–8, left to right), e.g. <strong>C3</strong>.</li>
+        <li><strong>Rook:</strong> Moves in straight lines along its row or column. It can pass through empty squares but stops at the first piece in the way, which it may capture (friend or foe). It cannot move past that piece.</li>
+        <li><strong>Knight:</strong> Moves diagonally up to three squares in any of the four diagonal directions. Any pieces along that diagonal path are captured when the knight lands.</li>
+        <li><strong>Pawn:</strong> Jumps exactly two squares away in any horizontal, vertical, or diagonal direction (eight possible landing squares). Can jump over pieces in between and capture on the destination square (friend or foe).</li>
+        <li><strong>Bishop:</strong> Moves exactly two squares in a cardinal direction (same letter or same number) or exactly one square diagonally. Can jump over pieces in between and capture on the destination square (friend or foe).</li>
+        <li><strong>Queen:</strong> Moves to any of the eight squares bordering her, or to the vertically mirrored square on the same letter: column <strong>9 minus</strong> her current number (e.g. on C3 she can also move to C6).</li>
+        <li><strong>King:</strong> Looks at every piece bordering him, then may move to any square bordering one of those pieces. He cannot stay on his own square and cannot capture his own team’s pieces (empty squares and enemy captures only).</li>
+        <li>When a piece lands on another piece, that piece is removed and added to the capture (knights also remove pieces along their travel path).</li>
+        <li>Each player’s score is the total value of their remaining pieces: Pawn 1, Bishop 2, Rook 5, Knight 8, King 12, Queen 15. You win when your opponent’s score drops to 5 or below.</li>
       </ul>
     </details>
   </div>
