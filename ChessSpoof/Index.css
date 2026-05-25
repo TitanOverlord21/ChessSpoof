@@ -7,6 +7,7 @@ body {
   overflow: auto;
   position: relative;
   isolation: isolate;
+  --rainbow-spin-duration: 12s;
 }
 
 body::before {
@@ -27,7 +28,7 @@ body::before {
       #ff0088,
       #ff0000
     );
-  animation: rainbow-swirl 12s linear infinite;
+  animation: rainbow-swirl var(--rainbow-spin-duration) linear infinite;
 }
 
 @keyframes rainbow-swirl {
@@ -40,6 +41,49 @@ body::before {
   }
 }
 
+.rainbow-controls {
+  position: fixed;
+  right: 1.25rem;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transform: translateY(-50%);
+}
+
+.rainbow-controls-label {
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+}
+
+.rainbow-controls-hint {
+  font-family: system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+#rainbow-speed {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 1.5rem;
+  height: 10rem;
+  margin: 0;
+  accent-color: #ff0088;
+  cursor: pointer;
+}
+
 .game-ui {
   position: relative;
   z-index: 1;
@@ -49,6 +93,23 @@ body::before {
   gap: 1.5rem;
   padding: 2rem;
   max-width: 42rem;
+}
+
+.page-title {
+  margin: 0;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.8),
+    0 3px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.65),
+    2px 2px 0 #ff0088,
+    -2px -2px 0 #00ffff;
 }
 
 .board-unit {

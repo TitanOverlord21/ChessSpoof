@@ -473,3 +473,11 @@ for (const piece of Pieces) {
 }
 
 updateScoreDisplay();
+
+const rainbowSpeedSlider = document.getElementById("rainbow-speed");
+if (rainbowSpeedSlider) {
+  rainbowSpeedSlider.addEventListener("input", () => {
+    const duration = Number(rainbowSpeedSlider.value);
+    document.body.style.setProperty("--rainbow-spin-duration", `${duration}s`);
+  });
+}
