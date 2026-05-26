@@ -6,6 +6,9 @@ const board = document.getElementById("board");
 const squaresById = {};
 let pendingMove = null;
 let gameOver = false;
+let inputsPaused = false;
+let selectedSquare = null;
+let audioUnlocked = false;
 
 function getPlayerScore(player) {
   return Pieces.reduce((total, piece) => {
@@ -58,6 +61,29 @@ function clearMoveHighlights() {
   }
 
   pendingMove = null;
+}
+
+function clearSelection(playDeselectSound = false) {
+  if (!selectedSquare) {
+    return;
+  }
+
+  selectedSquare.classList.remove("selected");
+  selectedSquare = null;
+
+  if (playDeselectSound) {
+    gameAudio.playDeselect();
+  }
+}
+
+function unlockAudioOnce() {
+  if (audioUnlocked) {
+    gameAudio.ensureContext();
+    return;
+  }
+
+  audioUnlocked = true;
+  gameAudio.ensureContext();
 }
 
 function squareIdFromIndices(rowIndex, colIndex) {
@@ -448,28 +474,81 @@ class King {
 
 const Players = ["White", "Black"];
 
-const Pieces = [
-  new Rook("White", "A1", "WhiteRook.png"),
-  new Knight("White", "A2", "WhiteKnight.png"),
-  new Knight("White", "B2", "WhiteKnight.png"),
-  new Pawn("White", "C2", "WhitePawn.png"),
-  new Pawn("White", "B3", "WhitePawn.png"),
-  new Pawn("White", "D1", "WhitePawn.png"),
-  new Pawn("White", "A4", "WhitePawn.png"),
-  new Bishop("White", "B1", "WhiteBishop.png"),
-  new Queen("White", "C1", "WhiteQueen.png"),
-  new King("White", "A3", "WhiteKing.png"),
-  new Rook("Black", "H8", "BlackRook.png"),
-  new Knight("Black", "H7", "BlackKnight.png"),
-  new Knight("Black", "G7", "BlackKnight.png"),
-  new Pawn("Black", "F7", "BlackPawn.png"),
-  new Pawn("Black", "G6", "BlackPawn.png"),
-  new Pawn("Black", "E8", "BlackPawn.png"),
-  new Pawn("Black", "H5", "BlackPawn.png"),
-  new Bishop("Black", "G8", "BlackBishop.png"),
-  new Queen("Black", "F8", "BlackQueen.png"),
-  new King("Black", "H6", "BlackKing.png"),
+const STARTING_SETUP = [
+  ["Rook", "White", "A1", "WhiteRook.png"],
+  ["Knight", "White", "A2", "WhiteKnight.png"],
+  ["Knight", "White", "B2", "WhiteKnight.png"],
+  ["Pawn", "White", "C2", "WhitePawn.png"],
+  ["Pawn", "White", "B3", "WhitePawn.png"],
+  ["Pawn", "White", "D1", "WhitePawn.png"],
+  ["Pawn", "White", "A4", "WhitePawn.png"],
+  ["Bishop", "White", "B1", "WhiteBishop.png"],
+  ["Queen", "White", "C1", "WhiteQueen.png"],
+  ["King", "White", "A3", "WhiteKing.png"],
+  ["Rook", "Black", "H8", "BlackRook.png"],
+  ["Knight", "Black", "H7", "BlackKnight.png"],
+  ["Knight", "Black", "G7", "BlackKnight.png"],
+  ["Pawn", "Black", "F7", "BlackPawn.png"],
+  ["Pawn", "Black", "G6", "BlackPawn.png"],
+  ["Pawn", "Black", "E8", "BlackPawn.png"],
+  ["Pawn", "Black", "H5", "BlackPawn.png"],
+  ["Bishop", "Black", "G8", "BlackBishop.png"],
+  ["Queen", "Black", "F8", "BlackQueen.png"],
+  ["King", "Black", "H6", "BlackKing.png"],
 ];
+
+const PIECE_TYPES = { Pawn, Rook, Knight, Bishop, Queen, King };
+
+function createStartingPieces() {
+  return STARTING_SETUP.map(([pieceName, player, square, imageFile]) => {
+    return new PIECE_TYPES[pieceName](player, square, imageFile);
+  });
+}
+
+function placePieceOnSquare(piece) {
+  const square = squaresById[piece.CurrentSquare];
+  if (!square) {
+    return;
+  }
+
+  square.piece = piece;
+  square.classList.add("occupied");
+  square.textContent = "";
+
+  const img = document.createElement("img");
+  img.className = piece.name === "Pawn" ? "piece pawn" : "piece";
+  img.src = piece.image;
+  img.alt = piece.name;
+  square.appendChild(img);
+}
+
+function clearBoard() {
+  for (const square of Object.values(squaresById)) {
+    square.piece = null;
+    square.classList.remove("occupied", "selected", "move-target");
+    square.textContent = square.id;
+    for (const pieceImage of square.querySelectorAll(".piece")) {
+      pieceImage.remove();
+    }
+  }
+}
+
+function resetGame() {
+  clearMoveHighlights();
+  clearSelection(false);
+  gameOver = false;
+  clearBoard();
+  Pieces.length = 0;
+  Pieces.push(...createStartingPieces());
+
+  for (const piece of Pieces) {
+    placePieceOnSquare(piece);
+  }
+
+  updateScoreDisplay();
+}
+
+let Pieces = [];
 
 for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
   const rowLabel = ROWS[rowIndex];
@@ -498,18 +577,44 @@ for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
     square.piece = null;
 
     square.addEventListener("click", () => {
+      if (inputsPaused || gameOver) {
+        return;
+      }
+
+      unlockAudioOnce();
+
       if (pendingMove) {
         if (square.classList.contains("move-target")) {
+          gameAudio.playSlide();
           movePieceToSquare(pendingMove.piece, squareId);
           clearMoveHighlights();
+          clearSelection(false);
         } else {
           clearMoveHighlights();
+          clearSelection(true);
         }
         return;
       }
 
       if (square.piece) {
+        if (selectedSquare === square) {
+          clearMoveHighlights();
+          clearSelection(true);
+          return;
+        }
+
+        clearMoveHighlights();
+        clearSelection(false);
+        selectedSquare = square;
+        square.classList.add("selected");
+        gameAudio.playSelect();
         square.piece.Function(square.piece.CurrentSquare, square.piece);
+        return;
+      }
+
+      if (selectedSquare) {
+        clearMoveHighlights();
+        clearSelection(true);
       }
     });
 
@@ -533,24 +638,107 @@ corner.style.gridColumn = "1";
 corner.style.gridRow = String(ROWS.length + 1);
 board.appendChild(corner);
 
+Pieces.push(...createStartingPieces());
 for (const piece of Pieces) {
-  const square = squaresById[piece.CurrentSquare];
-  if (!square) {
-    continue;
-  }
-
-  square.piece = piece;
-  square.classList.add("occupied");
-  square.textContent = "";
-
-  const img = document.createElement("img");
-  img.className = piece.name === "Pawn" ? "piece pawn" : "piece";
-  img.src = piece.image;
-  img.alt = piece.name;
-  square.appendChild(img);
+  placePieceOnSquare(piece);
 }
 
 updateScoreDisplay();
+
+function openSettings() {
+  inputsPaused = true;
+  clearMoveHighlights();
+  clearSelection(false);
+  document.body.classList.add("settings-open");
+  settingsOverlay.hidden = false;
+  settingsOverlay.setAttribute("aria-hidden", "false");
+  settingsButton.setAttribute("aria-expanded", "true");
+  settingsMainView.hidden = false;
+  settingsVolumeView.hidden = true;
+}
+
+function closeSettings() {
+  inputsPaused = false;
+  document.body.classList.remove("settings-open");
+  settingsOverlay.hidden = true;
+  settingsOverlay.setAttribute("aria-hidden", "true");
+  settingsButton.setAttribute("aria-expanded", "false");
+}
+
+function updateVolumeLabels() {
+  volumeSfxValue.textContent = `${volumeSfxInput.value}%`;
+  volumeMusicValue.textContent = `${volumeMusicInput.value}%`;
+}
+
+const settingsButton = document.getElementById("settings-button");
+const settingsOverlay = document.getElementById("settings-overlay");
+const settingsMainView = document.getElementById("settings-main");
+const settingsVolumeView = document.getElementById("settings-volume");
+const settingsResetButton = document.getElementById("settings-reset");
+const settingsVolumeOpenButton = document.getElementById("settings-volume-open");
+const settingsVolumeBackButton = document.getElementById("settings-volume-back");
+const settingsCloseButton = document.getElementById("settings-close");
+const volumeSfxInput = document.getElementById("volume-sfx");
+const volumeMusicInput = document.getElementById("volume-music");
+const volumeSfxValue = document.getElementById("volume-sfx-value");
+const volumeMusicValue = document.getElementById("volume-music-value");
+
+const savedSfxVolume = localStorage.getItem("chessSpoofSfxVol");
+const savedMusicVolume = localStorage.getItem("chessSpoofMusicVol");
+if (savedSfxVolume !== null) {
+  volumeSfxInput.value = savedSfxVolume;
+}
+if (savedMusicVolume !== null) {
+  volumeMusicInput.value = savedMusicVolume;
+}
+
+gameAudio.setSfxVolume(Number(volumeSfxInput.value));
+gameAudio.setMusicVolume(Number(volumeMusicInput.value));
+updateVolumeLabels();
+
+gameAudio.unlock();
+
+settingsButton.addEventListener("click", () => {
+  unlockAudioOnce();
+  openSettings();
+});
+
+settingsCloseButton.addEventListener("click", closeSettings);
+
+settingsOverlay.addEventListener("click", (event) => {
+  if (event.target === settingsOverlay) {
+    closeSettings();
+  }
+});
+
+settingsResetButton.addEventListener("click", () => {
+  resetGame();
+  closeSettings();
+});
+
+settingsVolumeOpenButton.addEventListener("click", () => {
+  settingsMainView.hidden = true;
+  settingsVolumeView.hidden = false;
+});
+
+settingsVolumeBackButton.addEventListener("click", () => {
+  settingsVolumeView.hidden = true;
+  settingsMainView.hidden = false;
+});
+
+volumeSfxInput.addEventListener("input", () => {
+  unlockAudioOnce();
+  gameAudio.setSfxVolume(Number(volumeSfxInput.value));
+  localStorage.setItem("chessSpoofSfxVol", volumeSfxInput.value);
+  updateVolumeLabels();
+});
+
+volumeMusicInput.addEventListener("input", () => {
+  unlockAudioOnce();
+  gameAudio.setMusicVolume(Number(volumeMusicInput.value));
+  localStorage.setItem("chessSpoofMusicVol", volumeMusicInput.value);
+  updateVolumeLabels();
+});
 
 const rainbowSpeedSlider = document.getElementById("rainbow-speed");
 if (rainbowSpeedSlider) {

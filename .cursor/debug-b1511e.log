@@ -1,0 +1,8 @@
+{"sessionId":"b1511e","location":"Index.js:init","message":"page init complete","data":{"musicVol":"30","sfxVol":"51","audioUnlocked":false},"timestamp":1779823583046,"hypothesisId":"E"}
+{"sessionId":"b1511e","location":"Audio.js:unlock:entry","message":"unlock called","data":{"hadContext":false,"musicStarted":false,"musicVolume":0.135},"timestamp":1779823583047,"hypothesisId":"A"}
+{"sessionId":"b1511e","location":"Index.js:init","message":"page init complete","data":{"musicVol":"30","sfxVol":"51","audioUnlocked":false},"timestamp":1779823584518,"hypothesisId":"E"}
+{"sessionId":"b1511e","location":"Audio.js:unlock:entry","message":"unlock called","data":{"hadContext":false,"musicStarted":false,"musicVolume":0.135},"timestamp":1779823584518,"hypothesisId":"A"}
+{"sessionId":"b1511e","location":"Index.js:init","message":"page init complete","data":{"musicVol":"30","sfxVol":"51","audioUnlocked":false},"timestamp":1779823584718,"hypothesisId":"E"}
+{"sessionId":"b1511e","location":"Audio.js:unlock:entry","message":"unlock called","data":{"hadContext":false,"musicStarted":false,"musicVolume":0.135},"timestamp":1779823584718,"hypothesisId":"A"}
+{"sessionId":"b1511e","location":"Index.js:init","message":"page init complete","data":{"musicVol":"30","sfxVol":"51","audioUnlocked":false},"timestamp":1779823585092,"hypothesisId":"E"}
+{"sessionId":"b1511e","location":"Audio.js:unlock:entry","message":"unlock called","data":{"hadContext":false,"musicStarted":false,"musicVolume":0.135},"timestamp":1779823585092,"hypothesisId":"A"}

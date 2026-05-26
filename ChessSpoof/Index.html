@@ -7,6 +7,33 @@
   <link rel="stylesheet" href="Index.css">
 </head>
 <body>
+  <button type="button" class="settings-button" id="settings-button" aria-label="Open settings" aria-expanded="false" aria-controls="settings-overlay">
+    Settings
+  </button>
+  <div class="settings-overlay" id="settings-overlay" hidden aria-hidden="true">
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="settings-view" id="settings-main">
+        <h2 class="settings-title" id="settings-title">Settings</h2>
+        <button type="button" class="settings-action" id="settings-reset">Reset Game</button>
+        <button type="button" class="settings-action" id="settings-volume-open">Volume</button>
+        <button type="button" class="settings-action settings-action-primary" id="settings-close">Resume</button>
+      </div>
+      <div class="settings-view" id="settings-volume" hidden>
+        <h2 class="settings-title">Volume</h2>
+        <label class="settings-slider-label" for="volume-sfx">
+          Sound Effects
+          <span class="settings-slider-value" id="volume-sfx-value">70%</span>
+        </label>
+        <input type="range" class="settings-slider" id="volume-sfx" min="0" max="100" value="70" step="1">
+        <label class="settings-slider-label" for="volume-music">
+          Music
+          <span class="settings-slider-value" id="volume-music-value">35%</span>
+        </label>
+        <input type="range" class="settings-slider" id="volume-music" min="0" max="100" value="35" step="1">
+        <button type="button" class="settings-action" id="settings-volume-back">Back</button>
+      </div>
+    </div>
+  </div>
   <aside class="rainbow-controls" aria-label="Rainbow speed control">
     <label class="rainbow-controls-label" for="rainbow-speed">Rainbow Speed</label>
     <span class="rainbow-controls-hint">Slow</span>
@@ -39,6 +66,7 @@
       </ul>
     </details>
   </div>
+  <script src="Audio.js"></script>
   <script src="Index.js"></script>
 </body>
 </html>
