@@ -9,8 +9,15 @@ let gameOver = false;
 let inputsPaused = false;
 let selectedSquare = null;
 let audioUnlocked = false;
+let gameMode = "menu";
+let selectedPaletteTemplate = null;
+let selectedPaletteButton = null;
 
 function getPlayerScore(player) {
+  if (gameMode !== "two-player") {
+    return 0;
+  }
+
   return Pieces.reduce((total, piece) => {
     if (piece.player === player) {
       return total + piece.value;
@@ -30,7 +37,7 @@ function updateScoreDisplay() {
 }
 
 function checkForWinner() {
-  if (gameOver) {
+  if (gameOver || gameMode !== "two-player") {
     return;
   }
 
@@ -150,15 +157,17 @@ function removePieceFromSquare(square) {
   }
 
   const pieceIndex = Pieces.indexOf(capturedPiece);
-  if (pieceIndex !== -1) {
+  if (pieceIndex !== -1 && gameMode === "two-player") {
     Pieces.splice(pieceIndex, 1);
   }
 
   square.piece = null;
   square.classList.remove("occupied");
   square.textContent = square.id;
-  updateScoreDisplay();
-  checkForWinner();
+  if (gameMode === "two-player") {
+    updateScoreDisplay();
+    checkForWinner();
+  }
 }
 
 function movePieceToSquare(piece, newSquareId) {
@@ -499,6 +508,21 @@ const STARTING_SETUP = [
 
 const PIECE_TYPES = { Pawn, Rook, Knight, Bishop, Queen, King };
 
+const PIECE_PALETTE = [
+  ["Pawn", "White", "WhitePawn.png"],
+  ["Rook", "White", "WhiteRook.png"],
+  ["Knight", "White", "WhiteKnight.png"],
+  ["Bishop", "White", "WhiteBishop.png"],
+  ["Queen", "White", "WhiteQueen.png"],
+  ["King", "White", "WhiteKing.png"],
+  ["Pawn", "Black", "BlackPawn.png"],
+  ["Rook", "Black", "BlackRook.png"],
+  ["Knight", "Black", "BlackKnight.png"],
+  ["Bishop", "Black", "BlackBishop.png"],
+  ["Queen", "Black", "BlackQueen.png"],
+  ["King", "Black", "BlackKing.png"],
+];
+
 function createStartingPieces() {
   return STARTING_SETUP.map(([pieceName, player, square, imageFile]) => {
     return new PIECE_TYPES[pieceName](player, square, imageFile);
@@ -548,6 +572,124 @@ function resetGame() {
   updateScoreDisplay();
 }
 
+function clearSquarePiece(square) {
+  if (!square || !square.piece) {
+    return;
+  }
+
+  const capturedPiece = square.piece;
+  const capturedImage = square.querySelector(".piece");
+  if (capturedImage) {
+    capturedImage.remove();
+  }
+
+  const pieceIndex = Pieces.indexOf(capturedPiece);
+  if (pieceIndex !== -1) {
+    Pieces.splice(pieceIndex, 1);
+  }
+
+  square.piece = null;
+  square.classList.remove("occupied");
+  square.textContent = square.id;
+}
+
+function placeFreeBoardPiece(squareId, template) {
+  const square = squaresById[squareId];
+  if (!square) {
+    return;
+  }
+
+  clearSquarePiece(square);
+  const piece = new PIECE_TYPES[template.name](template.player, squareId, template.imageFile);
+  placePieceOnSquare(piece);
+}
+
+function clearPaletteSelection() {
+  if (selectedPaletteButton) {
+    selectedPaletteButton.classList.remove("selected");
+    selectedPaletteButton = null;
+  }
+  selectedPaletteTemplate = null;
+}
+
+function selectPalettePiece(button, template) {
+  unlockAudioOnce();
+  clearMoveHighlights();
+  clearSelection(false);
+  clearPaletteSelection();
+  selectedPaletteButton = button;
+  selectedPaletteTemplate = template;
+  button.classList.add("selected");
+  gameAudio.playSelect();
+}
+
+function handleTwoPlayerSquareClick(square, squareId) {
+  if (gameMode === "free-board") {
+    clearPaletteSelection();
+  }
+
+  if (pendingMove) {
+    if (square.classList.contains("move-target")) {
+      gameAudio.playSlide();
+      movePieceToSquare(pendingMove.piece, squareId);
+      clearMoveHighlights();
+      clearSelection(false);
+    } else {
+      clearMoveHighlights();
+      clearSelection(true);
+    }
+    return;
+  }
+
+  if (square.piece) {
+    if (selectedSquare === square) {
+      clearMoveHighlights();
+      clearSelection(true);
+      return;
+    }
+
+    clearMoveHighlights();
+    clearSelection(false);
+    selectedSquare = square;
+    square.classList.add("selected");
+    gameAudio.playSelect();
+    square.piece.Function(square.piece.CurrentSquare, square.piece);
+    return;
+  }
+
+  if (selectedSquare) {
+    clearMoveHighlights();
+    clearSelection(true);
+  }
+}
+
+function handleFreeBoardSquareClick(square, squareId) {
+  if (selectedPaletteTemplate) {
+    placeFreeBoardPiece(squareId, selectedPaletteTemplate);
+    gameAudio.playSlide();
+    return;
+  }
+
+  handleTwoPlayerSquareClick(square, squareId);
+}
+
+function handleSquareClick(square, squareId) {
+  if (inputsPaused || gameOver) {
+    return;
+  }
+
+  unlockAudioOnce();
+
+  if (gameMode === "two-player") {
+    handleTwoPlayerSquareClick(square, squareId);
+    return;
+  }
+
+  if (gameMode === "free-board") {
+    handleFreeBoardSquareClick(square, squareId);
+  }
+}
+
 let Pieces = [];
 
 for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
@@ -577,45 +719,7 @@ for (let rowIndex = ROWS.length - 1; rowIndex >= 0; rowIndex -= 1) {
     square.piece = null;
 
     square.addEventListener("click", () => {
-      if (inputsPaused || gameOver) {
-        return;
-      }
-
-      unlockAudioOnce();
-
-      if (pendingMove) {
-        if (square.classList.contains("move-target")) {
-          gameAudio.playSlide();
-          movePieceToSquare(pendingMove.piece, squareId);
-          clearMoveHighlights();
-          clearSelection(false);
-        } else {
-          clearMoveHighlights();
-          clearSelection(true);
-        }
-        return;
-      }
-
-      if (square.piece) {
-        if (selectedSquare === square) {
-          clearMoveHighlights();
-          clearSelection(true);
-          return;
-        }
-
-        clearMoveHighlights();
-        clearSelection(false);
-        selectedSquare = square;
-        square.classList.add("selected");
-        gameAudio.playSelect();
-        square.piece.Function(square.piece.CurrentSquare, square.piece);
-        return;
-      }
-
-      if (selectedSquare) {
-        clearMoveHighlights();
-        clearSelection(true);
-      }
+      handleSquareClick(square, squareId);
     });
 
     squaresById[squareId] = square;
@@ -638,23 +742,128 @@ corner.style.gridColumn = "1";
 corner.style.gridRow = String(ROWS.length + 1);
 board.appendChild(corner);
 
-Pieces.push(...createStartingPieces());
-for (const piece of Pieces) {
-  placePieceOnSquare(piece);
+const startScreen = document.getElementById("start-screen");
+const onePlayerMenu = document.getElementById("one-player-menu");
+const practiceScreen = document.getElementById("practice-screen");
+const playScreen = document.getElementById("play-screen");
+const playHeading = document.getElementById("play-heading");
+const playBackButton = document.getElementById("play-back");
+const piecePalette = document.getElementById("piece-palette");
+const freeBoardHint = document.getElementById("free-board-hint");
+const practiceTitle = document.getElementById("practice-title");
+const practiceMessage = document.getElementById("practice-message");
+
+function hideAllScreens() {
+  startScreen.hidden = true;
+  onePlayerMenu.hidden = true;
+  practiceScreen.hidden = true;
+  playScreen.hidden = true;
 }
 
-updateScoreDisplay();
+function showStartScreen() {
+  gameMode = "menu";
+  hideAllScreens();
+  clearMoveHighlights();
+  clearSelection(false);
+  clearPaletteSelection();
+  startScreen.hidden = false;
+  playScreen.classList.remove("play-screen--free-board");
+}
+
+function showOnePlayerMenu() {
+  gameMode = "one-player-menu";
+  hideAllScreens();
+  onePlayerMenu.hidden = false;
+}
+
+function showPracticeScreen(pieceName) {
+  gameMode = "practice";
+  hideAllScreens();
+  practiceTitle.textContent = `${pieceName} Practice`;
+  practiceMessage.textContent = `${pieceName} practice scenarios are coming soon.`;
+  practiceScreen.hidden = false;
+}
+
+function showPlayScreen(mode) {
+  hideAllScreens();
+  playScreen.hidden = false;
+  gameOver = false;
+
+  if (mode === "two-player") {
+    gameMode = "two-player";
+    playHeading.textContent = "ADAM CHESS SPOOF!!!";
+    playScreen.classList.remove("play-screen--free-board");
+    piecePalette.hidden = true;
+    freeBoardHint.hidden = true;
+    clearPaletteSelection();
+    resetGame();
+    return;
+  }
+
+  gameMode = "free-board";
+  playHeading.textContent = "Free Board";
+  playScreen.classList.add("play-screen--free-board");
+  piecePalette.hidden = false;
+  freeBoardHint.hidden = false;
+  clearMoveHighlights();
+  clearSelection(false);
+  clearPaletteSelection();
+  Pieces.length = 0;
+  clearBoard();
+}
+
+function buildPiecePalette() {
+  for (const [pieceName, player, imageFile] of PIECE_PALETTE) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "palette-piece";
+    button.setAttribute("aria-label", `${player} ${pieceName}`);
+
+    const img = document.createElement("img");
+    img.src = `${IMAGE_PATH}${imageFile}`;
+    img.alt = pieceName;
+    if (pieceName === "Pawn") {
+      img.className = "pawn";
+    }
+
+    const label = document.createElement("span");
+    label.className = "palette-piece-label";
+    label.textContent = `${player} ${pieceName}`;
+
+    button.appendChild(img);
+    button.appendChild(label);
+
+    const template = { name: pieceName, player, imageFile };
+    button.addEventListener("click", () => {
+      if (selectedPaletteButton === button) {
+        clearPaletteSelection();
+        gameAudio.playDeselect();
+        return;
+      }
+      selectPalettePiece(button, template);
+    });
+
+    piecePalette.appendChild(button);
+  }
+}
+
+function showSettingsView(view) {
+  settingsMainView.hidden = view !== "main";
+  settingsRulesView.hidden = view !== "rules";
+  settingsVolumeView.hidden = view !== "volume";
+  settingsPanel.classList.toggle("settings-panel--rules", view === "rules");
+}
 
 function openSettings() {
   inputsPaused = true;
   clearMoveHighlights();
   clearSelection(false);
+  settingsResetButton.hidden = gameMode !== "two-player";
   document.body.classList.add("settings-open");
   settingsOverlay.hidden = false;
   settingsOverlay.setAttribute("aria-hidden", "false");
   settingsButton.setAttribute("aria-expanded", "true");
-  settingsMainView.hidden = false;
-  settingsVolumeView.hidden = true;
+  showSettingsView("main");
 }
 
 function closeSettings() {
@@ -672,9 +881,13 @@ function updateVolumeLabels() {
 
 const settingsButton = document.getElementById("settings-button");
 const settingsOverlay = document.getElementById("settings-overlay");
+const settingsPanel = settingsOverlay.querySelector(".settings-panel");
 const settingsMainView = document.getElementById("settings-main");
+const settingsRulesView = document.getElementById("settings-rules");
 const settingsVolumeView = document.getElementById("settings-volume");
 const settingsResetButton = document.getElementById("settings-reset");
+const settingsRulesOpenButton = document.getElementById("settings-rules-open");
+const settingsRulesBackButton = document.getElementById("settings-rules-back");
 const settingsVolumeOpenButton = document.getElementById("settings-volume-open");
 const settingsVolumeBackButton = document.getElementById("settings-volume-back");
 const settingsCloseButton = document.getElementById("settings-close");
@@ -698,6 +911,43 @@ updateVolumeLabels();
 
 gameAudio.unlock();
 
+buildPiecePalette();
+showStartScreen();
+
+document.getElementById("btn-one-player").addEventListener("click", () => {
+  unlockAudioOnce();
+  showOnePlayerMenu();
+});
+
+document.getElementById("btn-two-player").addEventListener("click", () => {
+  unlockAudioOnce();
+  showPlayScreen("two-player");
+});
+
+document.getElementById("btn-back-to-start").addEventListener("click", showStartScreen);
+
+document.getElementById("btn-free-board").addEventListener("click", () => {
+  unlockAudioOnce();
+  showPlayScreen("free-board");
+});
+
+document.getElementById("btn-back-from-practice").addEventListener("click", showOnePlayerMenu);
+
+for (const practiceButton of document.querySelectorAll(".practice-btn")) {
+  practiceButton.addEventListener("click", () => {
+    unlockAudioOnce();
+    showPracticeScreen(practiceButton.dataset.piece);
+  });
+}
+
+playBackButton.addEventListener("click", () => {
+  if (gameMode === "free-board") {
+    showOnePlayerMenu();
+    return;
+  }
+  showStartScreen();
+});
+
 settingsButton.addEventListener("click", () => {
   unlockAudioOnce();
   openSettings();
@@ -717,13 +967,19 @@ settingsResetButton.addEventListener("click", () => {
 });
 
 settingsVolumeOpenButton.addEventListener("click", () => {
-  settingsMainView.hidden = true;
-  settingsVolumeView.hidden = false;
+  showSettingsView("volume");
+});
+
+settingsRulesOpenButton.addEventListener("click", () => {
+  showSettingsView("rules");
+});
+
+settingsRulesBackButton.addEventListener("click", () => {
+  showSettingsView("main");
 });
 
 settingsVolumeBackButton.addEventListener("click", () => {
-  settingsVolumeView.hidden = true;
-  settingsMainView.hidden = false;
+  showSettingsView("main");
 });
 
 volumeSfxInput.addEventListener("input", () => {

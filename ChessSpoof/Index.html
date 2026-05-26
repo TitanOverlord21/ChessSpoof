@@ -15,8 +15,27 @@
       <div class="settings-view" id="settings-main">
         <h2 class="settings-title" id="settings-title">Settings</h2>
         <button type="button" class="settings-action" id="settings-reset">Reset Game</button>
+        <button type="button" class="settings-action" id="settings-rules-open">How to Play</button>
         <button type="button" class="settings-action" id="settings-volume-open">Volume</button>
         <button type="button" class="settings-action settings-action-primary" id="settings-close">Resume</button>
+      </div>
+      <div class="settings-view" id="settings-rules" hidden>
+        <h2 class="settings-title">How to Play</h2>
+        <div class="settings-rules-scroll">
+          <ul class="rules-list">
+            <li>Click a piece to highlight where it can move (yellow squares). Click a highlighted square to move there, or click anywhere else to cancel.</li>
+            <li>Squares are labeled with a letter (A–H, bottom to top) and a number (1–8, left to right), e.g. <strong>C3</strong>.</li>
+            <li><strong>Rook:</strong> Moves in straight lines along its row or column. It can pass through empty squares but stops at the first piece in the way, which it may capture (friend or foe). It cannot move past that piece.</li>
+            <li><strong>Knight:</strong> Moves diagonally up to three squares in any of the four diagonal directions. Any pieces along that diagonal path are captured when the knight lands.</li>
+            <li><strong>Pawn:</strong> Jumps exactly two squares away in any horizontal, vertical, or diagonal direction (eight possible landing squares). Can jump over pieces in between and capture on the destination square (friend or foe).</li>
+            <li><strong>Bishop:</strong> Moves exactly two squares in a cardinal direction (same letter or same number) or exactly one square diagonally. Can jump over pieces in between and capture on the destination square (friend or foe).</li>
+            <li><strong>Queen:</strong> Moves to any of the eight squares bordering her, or to the vertically mirrored square on the same letter: column <strong>9 minus</strong> her current number (e.g. on C3 she can also move to C6).</li>
+            <li><strong>King:</strong> Looks at every piece bordering him, then may move to any square bordering one of those pieces. He cannot stay on his own square and cannot capture his own team’s pieces (empty squares and enemy captures only).</li>
+            <li>When a piece lands on another piece, that piece is removed and added to the capture (knights also remove pieces along their travel path).</li>
+            <li>Each player’s score is the total value of their remaining pieces: Pawn 1, Bishop 2, Rook 5, Knight 8, King 12, Queen 15. You win when your opponent’s score drops to 5 or below.</li>
+          </ul>
+        </div>
+        <button type="button" class="settings-action" id="settings-rules-back">Back</button>
       </div>
       <div class="settings-view" id="settings-volume" hidden>
         <h2 class="settings-title">Volume</h2>
@@ -40,32 +59,56 @@
     <input type="range" id="rainbow-speed" min="2" max="30" value="12" step="1">
     <span class="rainbow-controls-hint">Fast</span>
   </aside>
-  <div class="game-ui">
+
+  <div id="start-screen" class="menu-screen">
     <h1 class="page-title">ADAM CHESS SPOOF!!!</h1>
-    <div class="board-unit">
-      <div class="board" id="board" aria-label="8 by 8 grid"></div>
-      <div class="board-front-border" aria-hidden="true"></div>
-      <div class="score-panel" aria-label="Scoreboard">
-        <p class="score-line">White: <span id="score-white">0</span></p>
-        <p class="score-line">Black: <span id="score-black">0</span></p>
-      </div>
+    <div class="menu-panel">
+      <button type="button" class="menu-button" id="btn-one-player">1 Player</button>
+      <button type="button" class="menu-button menu-button-primary" id="btn-two-player">2 Player</button>
     </div>
-    <details class="rules-panel">
-      <summary class="rules-heading">How to Play</summary>
-      <ul class="rules-list">
-        <li>Click a piece to highlight where it can move (yellow squares). Click a highlighted square to move there, or click anywhere else to cancel.</li>
-        <li>Squares are labeled with a letter (A–H, bottom to top) and a number (1–8, left to right), e.g. <strong>C3</strong>.</li>
-        <li><strong>Rook:</strong> Moves in straight lines along its row or column. It can pass through empty squares but stops at the first piece in the way, which it may capture (friend or foe). It cannot move past that piece.</li>
-        <li><strong>Knight:</strong> Moves diagonally up to three squares in any of the four diagonal directions. Any pieces along that diagonal path are captured when the knight lands.</li>
-        <li><strong>Pawn:</strong> Jumps exactly two squares away in any horizontal, vertical, or diagonal direction (eight possible landing squares). Can jump over pieces in between and capture on the destination square (friend or foe).</li>
-        <li><strong>Bishop:</strong> Moves exactly two squares in a cardinal direction (same letter or same number) or exactly one square diagonally. Can jump over pieces in between and capture on the destination square (friend or foe).</li>
-        <li><strong>Queen:</strong> Moves to any of the eight squares bordering her, or to the vertically mirrored square on the same letter: column <strong>9 minus</strong> her current number (e.g. on C3 she can also move to C6).</li>
-        <li><strong>King:</strong> Looks at every piece bordering him, then may move to any square bordering one of those pieces. He cannot stay on his own square and cannot capture his own team’s pieces (empty squares and enemy captures only).</li>
-        <li>When a piece lands on another piece, that piece is removed and added to the capture (knights also remove pieces along their travel path).</li>
-        <li>Each player’s score is the total value of their remaining pieces: Pawn 1, Bishop 2, Rook 5, Knight 8, King 12, Queen 15. You win when your opponent’s score drops to 5 or below.</li>
-      </ul>
-    </details>
   </div>
+
+  <div id="one-player-menu" class="menu-screen" hidden>
+    <h1 class="page-title menu-title-sm">1 Player</h1>
+    <div class="menu-panel menu-panel-wide">
+      <p class="menu-section-label">Practice</p>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="Pawn">Pawn Practice</button>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="Rook">Rook Practice</button>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="Knight">Knight Practice</button>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="Bishop">Bishop Practice</button>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="Queen">Queen Practice</button>
+      <button type="button" class="menu-button menu-button-secondary practice-btn" data-piece="King">King Practice</button>
+      <p class="menu-section-label">Sandbox</p>
+      <button type="button" class="menu-button" id="btn-free-board">Free Board</button>
+      <button type="button" class="menu-button menu-button-back" id="btn-back-to-start">Back</button>
+    </div>
+  </div>
+
+  <div id="practice-screen" class="menu-screen" hidden>
+    <h1 class="page-title menu-title-sm" id="practice-title">Practice</h1>
+    <div class="menu-panel">
+      <p class="menu-placeholder" id="practice-message">Coming soon.</p>
+      <button type="button" class="menu-button menu-button-back" id="btn-back-from-practice">Back</button>
+    </div>
+  </div>
+
+  <div id="play-screen" class="play-screen" hidden>
+    <button type="button" class="screen-back" id="play-back">← Menu</button>
+    <h1 class="page-title play-heading" id="play-heading">ADAM CHESS SPOOF!!!</h1>
+    <div class="play-layout">
+      <div class="board-unit">
+        <div class="board" id="board" aria-label="8 by 8 grid"></div>
+        <div class="board-front-border" aria-hidden="true"></div>
+        <div class="score-panel" id="score-panel" aria-label="Scoreboard">
+          <p class="score-line">White: <span id="score-white">0</span></p>
+          <p class="score-line">Black: <span id="score-black">0</span></p>
+        </div>
+      </div>
+      <div class="piece-palette" id="piece-palette" hidden aria-label="Piece palette"></div>
+      <p class="free-board-hint" id="free-board-hint" hidden>Select a piece below to place it, or click a piece on the board to move it.</p>
+    </div>
+  </div>
+
   <script src="Audio.js"></script>
   <script src="Index.js"></script>
 </body>

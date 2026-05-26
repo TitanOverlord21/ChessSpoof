@@ -472,11 +472,249 @@ body::before {
   cursor: pointer;
 }
 
-body.settings-open .game-ui,
+body.settings-open .menu-screen,
+body.settings-open .play-screen,
 body.settings-open .rainbow-controls {
   pointer-events: none;
 }
 
 body.settings-open .settings-button {
   visibility: hidden;
+}
+
+.menu-screen {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  max-width: 28rem;
+  width: 100%;
+}
+
+.menu-screen[hidden] {
+  display: none;
+}
+
+.menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.12)),
+    url("assets/textures/wood-frame.png") center / cover;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.menu-panel-wide {
+  max-width: 22rem;
+}
+
+.menu-title-sm {
+  font-size: clamp(1.6rem, 5vw, 2.25rem);
+}
+
+.menu-section-label {
+  margin: 0.35rem 0 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 228, 180, 0.75);
+}
+
+.menu-section-label:not(:first-child) {
+  margin-top: 0.75rem;
+}
+
+.menu-button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 228, 180, 0.95);
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.menu-button-primary {
+  color: #fff;
+  background: rgba(120, 60, 20, 0.85);
+}
+
+.menu-button-primary:hover {
+  background: rgba(140, 70, 25, 0.95);
+}
+
+.menu-button-secondary {
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+}
+
+.menu-button-back {
+  margin-top: 0.35rem;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.menu-placeholder {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(240, 230, 210, 0.9);
+  text-align: center;
+}
+
+.play-screen {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 2rem 2.5rem;
+  max-width: 42rem;
+  width: 100%;
+}
+
+.play-screen[hidden] {
+  display: none;
+}
+
+.play-heading {
+  margin-top: 0.25rem;
+}
+
+.play-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.screen-back {
+  align-self: flex-start;
+  margin-bottom: -0.5rem;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 4px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.screen-back:hover {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.play-screen--free-board .score-panel {
+  display: none;
+}
+
+.piece-palette {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border-radius: 4px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.1)),
+    url("assets/textures/wood-frame.png") center / cover;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.piece-palette[hidden] {
+  display: none;
+}
+
+.palette-piece {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.palette-piece:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.palette-piece.selected {
+  border-color: rgba(186, 202, 68, 0.95);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.palette-piece img {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+.palette-piece img.pawn {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.palette-piece-label {
+  font-family: system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 228, 180, 0.85);
+  pointer-events: none;
+}
+
+.free-board-hint {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+.free-board-hint[hidden] {
+  display: none;
+}
+
+.settings-panel--rules {
+  width: min(100%, 30rem);
+}
+
+.settings-rules-scroll {
+  max-height: min(55vh, 22rem);
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+  padding-right: 0.25rem;
+}
+
+.settings-rules-scroll .rules-list {
+  padding-right: 0.5rem;
 }
