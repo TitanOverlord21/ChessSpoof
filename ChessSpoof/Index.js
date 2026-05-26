@@ -12,6 +12,37 @@ let audioUnlocked = false;
 let gameMode = "menu";
 let selectedPaletteTemplate = null;
 let selectedPaletteButton = null;
+let currentTurn = "White";
+
+function isTurnBasedGame() {
+  return gameMode === "two-player";
+}
+
+function updateTurnDisplay() {
+  const turnLine = document.getElementById("turn-line");
+  const turnIndicator = document.getElementById("turn-indicator");
+  if (!turnLine || !turnIndicator) {
+    return;
+  }
+
+  if (!isTurnBasedGame()) {
+    turnLine.hidden = true;
+    return;
+  }
+
+  turnLine.hidden = false;
+  turnIndicator.textContent = currentTurn;
+}
+
+function resetTurn() {
+  currentTurn = "White";
+  updateTurnDisplay();
+}
+
+function swapTurn() {
+  currentTurn = currentTurn === "White" ? "Black" : "White";
+  updateTurnDisplay();
+}
 
 function getPlayerScore(player) {
   if (gameMode !== "two-player") {
@@ -570,6 +601,7 @@ function resetGame() {
   }
 
   updateScoreDisplay();
+  resetTurn();
 }
 
 function clearSquarePiece(square) {
@@ -630,10 +662,20 @@ function handleTwoPlayerSquareClick(square, squareId) {
 
   if (pendingMove) {
     if (square.classList.contains("move-target")) {
+      if (isTurnBasedGame() && pendingMove.piece.player !== currentTurn) {
+        clearMoveHighlights();
+        gameAudio.playDeselect();
+        return;
+      }
+
       gameAudio.playSlide();
       movePieceToSquare(pendingMove.piece, squareId);
       clearMoveHighlights();
       clearSelection(false);
+
+      if (isTurnBasedGame()) {
+        swapTurn();
+      }
     } else {
       clearMoveHighlights();
       clearSelection(true);
@@ -642,6 +684,9 @@ function handleTwoPlayerSquareClick(square, squareId) {
   }
 
   if (square.piece) {
+    const piece = square.piece;
+    const canControlPiece = !isTurnBasedGame() || piece.player === currentTurn;
+
     if (selectedSquare === square) {
       clearMoveHighlights();
       clearSelection(true);
@@ -650,10 +695,14 @@ function handleTwoPlayerSquareClick(square, squareId) {
 
     clearMoveHighlights();
     clearSelection(false);
-    selectedSquare = square;
-    square.classList.add("selected");
+
+    if (canControlPiece) {
+      selectedSquare = square;
+      square.classList.add("selected");
+    }
+
     gameAudio.playSelect();
-    square.piece.Function(square.piece.CurrentSquare, square.piece);
+    piece.Function(piece.CurrentSquare, piece);
     return;
   }
 
@@ -768,6 +817,7 @@ function showStartScreen() {
   clearPaletteSelection();
   startScreen.hidden = false;
   playScreen.classList.remove("play-screen--free-board");
+  updateTurnDisplay();
 }
 
 function showOnePlayerMenu() {
@@ -810,6 +860,7 @@ function showPlayScreen(mode) {
   clearPaletteSelection();
   Pieces.length = 0;
   clearBoard();
+  updateTurnDisplay();
 }
 
 function buildPiecePalette() {
