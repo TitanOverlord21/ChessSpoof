@@ -709,7 +709,23 @@ body.settings-open .settings-button {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
-.free-board-hint[hidden] {
+.play-screen--practice .score-panel,
+.play-screen--practice #turn-line {
+  display: none;
+}
+
+.practice-hint {
+  margin: 0;
+  max-width: 22rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+.practice-hint[hidden] {
   display: none;
 }
 

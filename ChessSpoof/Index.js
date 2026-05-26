@@ -13,9 +13,15 @@ let gameMode = "menu";
 let selectedPaletteTemplate = null;
 let selectedPaletteButton = null;
 let currentTurn = "White";
+let activePractice = null;
+let practiceControlledPiece = null;
 
 function isTurnBasedGame() {
   return gameMode === "two-player";
+}
+
+function isPracticeGame() {
+  return gameMode === "practice";
 }
 
 function updateTurnDisplay() {
@@ -188,7 +194,7 @@ function removePieceFromSquare(square) {
   }
 
   const pieceIndex = Pieces.indexOf(capturedPiece);
-  if (pieceIndex !== -1 && gameMode === "two-player") {
+  if (pieceIndex !== -1 && (gameMode === "two-player" || gameMode === "practice")) {
     Pieces.splice(pieceIndex, 1);
   }
 
@@ -539,6 +545,24 @@ const STARTING_SETUP = [
 
 const PIECE_TYPES = { Pawn, Rook, Knight, Bishop, Queen, King };
 
+const PRACTICE_SCENARIOS = {
+  Pawn: {
+    title: "Pawn Practice",
+    hint: "Jump exactly two squares to capture. Take the black pawn beyond your bishop on D5 — not the queen on the other diagonal or an empty square.",
+    winSquare: "D6",
+    winMessage: "Correct! You jumped over your own bishop to capture the pawn.",
+    lossMessage: "Not quite. Jump over your ally on D5 to capture the pawn on D6.",
+    controlledPiece: { name: "Pawn", player: "White" },
+    setup: [
+      ["Pawn", "White", "D4", "WhitePawn.png"],
+      ["Bishop", "White", "D5", "WhiteBishop.png"],
+      ["Pawn", "Black", "D6", "BlackPawn.png"],
+      ["Queen", "Black", "B4", "BlackQueen.png"],
+      ["Rook", "Black", "B8", "BlackRook.png"],
+    ],
+  },
+};
+
 const PIECE_PALETTE = [
   ["Pawn", "White", "WhitePawn.png"],
   ["Rook", "White", "WhiteRook.png"],
@@ -602,6 +626,47 @@ function resetGame() {
 
   updateScoreDisplay();
   resetTurn();
+}
+
+function loadPracticeScenario(pieceName) {
+  const scenario = PRACTICE_SCENARIOS[pieceName];
+  if (!scenario) {
+    return;
+  }
+
+  clearMoveHighlights();
+  clearSelection(false);
+  gameOver = false;
+  practiceControlledPiece = null;
+  clearBoard();
+  Pieces.length = 0;
+
+  for (const [pieceType, player, square, imageFile] of scenario.setup) {
+    const piece = new PIECE_TYPES[pieceType](player, square, imageFile);
+    Pieces.push(piece);
+    placePieceOnSquare(piece);
+
+    const { name, player: controlPlayer } = scenario.controlledPiece;
+    if (piece.name === name && piece.player === controlPlayer) {
+      practiceControlledPiece = piece;
+    }
+  }
+}
+
+function resolvePracticeMove(destinationSquareId) {
+  const scenario = PRACTICE_SCENARIOS[activePractice];
+  if (!scenario) {
+    return;
+  }
+
+  if (destinationSquareId === scenario.winSquare) {
+    gameOver = true;
+    alert(scenario.winMessage);
+    return;
+  }
+
+  alert(scenario.lossMessage);
+  loadPracticeScenario(activePractice);
 }
 
 function clearSquarePiece(square) {
@@ -712,6 +777,56 @@ function handleTwoPlayerSquareClick(square, squareId) {
   }
 }
 
+function handlePracticeSquareClick(square, squareId) {
+  if (pendingMove) {
+    if (square.classList.contains("move-target")) {
+      if (pendingMove.piece !== practiceControlledPiece) {
+        clearMoveHighlights();
+        gameAudio.playDeselect();
+        return;
+      }
+
+      gameAudio.playSlide();
+      movePieceToSquare(pendingMove.piece, squareId);
+      clearMoveHighlights();
+      clearSelection(false);
+      resolvePracticeMove(squareId);
+    } else {
+      clearMoveHighlights();
+      clearSelection(true);
+    }
+    return;
+  }
+
+  if (square.piece) {
+    const piece = square.piece;
+    const canControlPiece = piece === practiceControlledPiece;
+
+    if (selectedSquare === square) {
+      clearMoveHighlights();
+      clearSelection(true);
+      return;
+    }
+
+    clearMoveHighlights();
+    clearSelection(false);
+
+    if (canControlPiece) {
+      selectedSquare = square;
+      square.classList.add("selected");
+    }
+
+    gameAudio.playSelect();
+    piece.Function(piece.CurrentSquare, piece);
+    return;
+  }
+
+  if (selectedSquare) {
+    clearMoveHighlights();
+    clearSelection(true);
+  }
+}
+
 function handleFreeBoardSquareClick(square, squareId) {
   if (selectedPaletteTemplate) {
     placeFreeBoardPiece(squareId, selectedPaletteTemplate);
@@ -736,6 +851,11 @@ function handleSquareClick(square, squareId) {
 
   if (gameMode === "free-board") {
     handleFreeBoardSquareClick(square, squareId);
+    return;
+  }
+
+  if (gameMode === "practice") {
+    handlePracticeSquareClick(square, squareId);
   }
 }
 
@@ -799,6 +919,7 @@ const playHeading = document.getElementById("play-heading");
 const playBackButton = document.getElementById("play-back");
 const piecePalette = document.getElementById("piece-palette");
 const freeBoardHint = document.getElementById("free-board-hint");
+const practiceHint = document.getElementById("practice-hint");
 const practiceTitle = document.getElementById("practice-title");
 const practiceMessage = document.getElementById("practice-message");
 
@@ -816,7 +937,8 @@ function showStartScreen() {
   clearSelection(false);
   clearPaletteSelection();
   startScreen.hidden = false;
-  playScreen.classList.remove("play-screen--free-board");
+  playScreen.classList.remove("play-screen--free-board", "play-screen--practice");
+  practiceHint.hidden = true;
   updateTurnDisplay();
 }
 
@@ -827,11 +949,35 @@ function showOnePlayerMenu() {
 }
 
 function showPracticeScreen(pieceName) {
-  gameMode = "practice";
+  gameMode = "practice-placeholder";
   hideAllScreens();
   practiceTitle.textContent = `${pieceName} Practice`;
   practiceMessage.textContent = `${pieceName} practice scenarios are coming soon.`;
   practiceScreen.hidden = false;
+}
+
+function showPracticeGame(pieceName) {
+  const scenario = PRACTICE_SCENARIOS[pieceName];
+  if (!scenario) {
+    showPracticeScreen(pieceName);
+    return;
+  }
+
+  activePractice = pieceName;
+  gameMode = "practice";
+  hideAllScreens();
+  playScreen.hidden = false;
+  gameOver = false;
+  playHeading.textContent = scenario.title;
+  playScreen.classList.remove("play-screen--free-board");
+  playScreen.classList.add("play-screen--practice");
+  piecePalette.hidden = true;
+  freeBoardHint.hidden = true;
+  practiceHint.hidden = false;
+  practiceHint.textContent = scenario.hint;
+  clearPaletteSelection();
+  loadPracticeScenario(pieceName);
+  updateTurnDisplay();
 }
 
 function showPlayScreen(mode) {
@@ -842,9 +988,10 @@ function showPlayScreen(mode) {
   if (mode === "two-player") {
     gameMode = "two-player";
     playHeading.textContent = "ADAM CHESS SPOOF!!!";
-    playScreen.classList.remove("play-screen--free-board");
+    playScreen.classList.remove("play-screen--free-board", "play-screen--practice");
     piecePalette.hidden = true;
     freeBoardHint.hidden = true;
+    practiceHint.hidden = true;
     clearPaletteSelection();
     resetGame();
     return;
@@ -853,8 +1000,10 @@ function showPlayScreen(mode) {
   gameMode = "free-board";
   playHeading.textContent = "Free Board";
   playScreen.classList.add("play-screen--free-board");
+  playScreen.classList.remove("play-screen--practice");
   piecePalette.hidden = false;
   freeBoardHint.hidden = false;
+  practiceHint.hidden = true;
   clearMoveHighlights();
   clearSelection(false);
   clearPaletteSelection();
@@ -987,12 +1136,12 @@ document.getElementById("btn-back-from-practice").addEventListener("click", show
 for (const practiceButton of document.querySelectorAll(".practice-btn")) {
   practiceButton.addEventListener("click", () => {
     unlockAudioOnce();
-    showPracticeScreen(practiceButton.dataset.piece);
+    showPracticeGame(practiceButton.dataset.piece);
   });
 }
 
 playBackButton.addEventListener("click", () => {
-  if (gameMode === "free-board") {
+  if (gameMode === "free-board" || gameMode === "practice") {
     showOnePlayerMenu();
     return;
   }
@@ -1013,6 +1162,11 @@ settingsOverlay.addEventListener("click", (event) => {
 });
 
 settingsResetButton.addEventListener("click", () => {
+  if (isPracticeGame()) {
+    loadPracticeScenario(activePractice);
+    closeSettings();
+    return;
+  }
   resetGame();
   closeSettings();
 });
