@@ -15,6 +15,9 @@ let selectedPaletteButton = null;
 let currentTurn = "White";
 let activePractice = null;
 let practiceControlledPiece = null;
+let practiceControlledPieces = [];
+let practiceTwoTurnPhase = 0;
+let practicePlayerMoves = 0;
 
 function isTurnBasedGame() {
   return gameMode === "two-player";
@@ -561,6 +564,92 @@ const PRACTICE_SCENARIOS = {
       ["Rook", "Black", "B8", "BlackRook.png"],
     ],
   },
+  Rook: {
+    title: "Rook Practice",
+    twoTurn: true,
+    enemyTurn: { name: "Pawn", player: "Black", to: "F6" },
+    hint: "Move your rook anywhere on your first turn. You must win on your second move by capturing the black king after their pawn jumps to F6.",
+    winMessage: "Correct! You captured the black king with your rook.",
+    lossMessage: "Not quite. Use your rook to capture the black king on C4.",
+    controlledPiece: { name: "Rook", player: "White" },
+    setup: [
+      ["Rook", "White", "B2", "WhiteRook.png"],
+      ["King", "Black", "C4", "BlackKing.png"],
+      ["Pawn", "Black", "H8", "BlackPawn.png"],
+    ],
+  },
+  Bishop: {
+    title: "Bishop Practice",
+    twoTurn: true,
+    enemyTurn: { name: "Pawn", player: "Black", to: "F6" },
+    hint: "Move your bishop anywhere on your first turn. You must win on your second move by capturing the black king after their pawn jumps to F6.",
+    winMessage: "Correct! You captured the black king with your bishop.",
+    lossMessage: "Not quite. Use your bishop to capture the black king on E3.",
+    controlledPiece: { name: "Bishop", player: "White" },
+    setup: [
+      ["Bishop", "White", "B2", "WhiteBishop.png"],
+      ["King", "Black", "E3", "BlackKing.png"],
+      ["Pawn", "Black", "H8", "BlackPawn.png"],
+    ],
+  },
+  Knight: {
+    title: "Knight Practice",
+    hint: "Capture the black pawn on F6 along the diagonal — not on E5, where the rook on E3 can take your knight.",
+    winSquare: "F6",
+    winMessage: "Correct! You captured the pawn on F6 without walking into the rook.",
+    lossMessage: "Not quite. Capture the pawn on F6 along the diagonal from C3.",
+    lossSquares: {
+      E5: "There is a better move! Capturing on E5 lets the black rook take your knight afterward.",
+    },
+    controlledPiece: { name: "Knight", player: "White" },
+    setup: [
+      ["Knight", "White", "C3", "WhiteKnight.png"],
+      ["Rook", "Black", "E3", "BlackRook.png"],
+      ["Pawn", "Black", "E5", "BlackPawn.png"],
+    ],
+  },
+  Queen: {
+    title: "Queen Practice",
+    twoTurn: true,
+    enemyTurn: { name: "Rook", player: "Black", to: "H5" },
+    firstMoveTrap: {
+      squares: ["B4", "C4", "D4"],
+      message:
+        "The black rook took your queen! Landing on B4, C4, or D4 on the first turn lets the rook capture you instead of moving to H5.",
+    },
+    hint: "Move your queen anywhere on your first turn. You must win on your second move by capturing the black king after their rook moves to H5.",
+    winMessage: "Correct! You captured the black king with your queen.",
+    lossMessage: "Not quite. Use your queen to capture the black king on D7.",
+    controlledPiece: { name: "Queen", player: "White" },
+    setup: [
+      ["Queen", "White", "C3", "WhiteQueen.png"],
+      ["King", "Black", "D7", "BlackKing.png"],
+      ["Rook", "Black", "H4", "BlackRook.png"],
+    ],
+  },
+  King: {
+    title: "King Practice",
+    multiTurn: {
+      moveLimit: 3,
+      enemyTurns: [
+        { name: "Bishop", player: "Black", to: "G7" },
+        { name: "Bishop", player: "Black", to: "F6" },
+      ],
+    },
+    hint: "You have three moves. Use your king and pawn freely to capture the black king on D5 while their bishop advances from H8 to G7 to F6.",
+    winMessage: "Correct! You captured the black king within three moves.",
+    lossMessage: "Not quite. Capture the black king on D5 within three moves using your king and pawn.",
+    controlledPieces: [
+      { name: "King", player: "White" },
+      { name: "Pawn", player: "White" },
+    ],
+    setup: [
+      ["King", "White", "A1", "WhiteKing.png"],
+      ["King", "Black", "D5", "BlackKing.png"],
+      ["Pawn", "White", "B2", "WhitePawn.png"],
+      ["Bishop", "Black", "H8", "BlackBishop.png"],
+    ],
+  },
 };
 
 const PIECE_PALETTE = [
@@ -638,24 +727,173 @@ function loadPracticeScenario(pieceName) {
   clearSelection(false);
   gameOver = false;
   practiceControlledPiece = null;
+  practiceControlledPieces = [];
+  practiceTwoTurnPhase = 0;
+  practicePlayerMoves = 0;
   clearBoard();
   Pieces.length = 0;
+
+  const controlledDefs =
+    scenario.controlledPieces ??
+    (scenario.controlledPiece ? [scenario.controlledPiece] : []);
 
   for (const [pieceType, player, square, imageFile] of scenario.setup) {
     const piece = new PIECE_TYPES[pieceType](player, square, imageFile);
     Pieces.push(piece);
     placePieceOnSquare(piece);
 
-    const { name, player: controlPlayer } = scenario.controlledPiece;
-    if (piece.name === name && piece.player === controlPlayer) {
-      practiceControlledPiece = piece;
+    const isControlled = controlledDefs.some(
+      ({ name, player: controlPlayer }) =>
+        piece.name === name && piece.player === controlPlayer,
+    );
+    if (isControlled) {
+      practiceControlledPieces.push(piece);
+      if (!scenario.controlledPieces && scenario.controlledPiece) {
+        practiceControlledPiece = piece;
+      }
     }
+  }
+
+  if (scenario.controlledPieces?.length === 1) {
+    practiceControlledPiece = practiceControlledPieces[0];
   }
 }
 
-function resolvePracticeMove(destinationSquareId) {
+function isPracticeControlledPiece(piece) {
+  if (practiceControlledPieces.length > 0) {
+    return practiceControlledPieces.includes(piece);
+  }
+
+  return piece === practiceControlledPiece;
+}
+
+function scheduleTwoTurnPracticeEnemyMove(trapCaptureSquare = null) {
+  inputsPaused = true;
+  setTimeout(() => {
+    const scenario = PRACTICE_SCENARIOS[activePractice];
+    if (gameMode !== "practice" || !scenario?.twoTurn || practiceTwoTurnPhase !== 1) {
+      inputsPaused = false;
+      return;
+    }
+
+    const { name, player, to } = scenario.enemyTurn;
+    const enemyPiece = Pieces.find(
+      (piece) => piece.name === name && piece.player === player,
+    );
+
+    if (trapCaptureSquare && scenario.firstMoveTrap) {
+      if (enemyPiece) {
+        movePieceToSquare(enemyPiece, trapCaptureSquare);
+      }
+      alert(scenario.firstMoveTrap.message);
+      loadPracticeScenario(activePractice);
+      inputsPaused = false;
+      return;
+    }
+
+    if (enemyPiece) {
+      movePieceToSquare(enemyPiece, to);
+    }
+
+    practiceTwoTurnPhase = 2;
+    inputsPaused = false;
+  }, 500);
+}
+
+function resolveTwoTurnPracticeMove(destinationSquareId, capturedPiece) {
+  const scenario = PRACTICE_SCENARIOS[activePractice];
+
+  if (practiceTwoTurnPhase === 0) {
+    practiceTwoTurnPhase = 1;
+    const trapSquares = scenario.firstMoveTrap?.squares;
+    if (trapSquares?.includes(destinationSquareId)) {
+      scheduleTwoTurnPracticeEnemyMove(destinationSquareId);
+    } else {
+      scheduleTwoTurnPracticeEnemyMove();
+    }
+    return;
+  }
+
+  if (practiceTwoTurnPhase === 1) {
+    return;
+  }
+
+  if (
+    practiceTwoTurnPhase === 2 &&
+    capturedPiece &&
+    capturedPiece.name === "King" &&
+    capturedPiece.player === "Black"
+  ) {
+    gameOver = true;
+    alert(scenario.winMessage);
+    return;
+  }
+
+  alert(scenario.lossMessage);
+  loadPracticeScenario(activePractice);
+}
+
+function scheduleMultiTurnPracticeEnemyMove(enemyTurn, afterPlayerMoves) {
+  inputsPaused = true;
+  setTimeout(() => {
+    const scenario = PRACTICE_SCENARIOS[activePractice];
+    if (
+      gameMode !== "practice" ||
+      !scenario?.multiTurn ||
+      practicePlayerMoves !== afterPlayerMoves
+    ) {
+      inputsPaused = false;
+      return;
+    }
+
+    const enemyPiece = Pieces.find(
+      (piece) => piece.name === enemyTurn.name && piece.player === enemyTurn.player,
+    );
+    if (enemyPiece) {
+      movePieceToSquare(enemyPiece, enemyTurn.to);
+    }
+
+    inputsPaused = false;
+  }, 500);
+}
+
+function resolveMultiTurnPracticeMove(capturedPiece) {
+  const scenario = PRACTICE_SCENARIOS[activePractice];
+  const { moveLimit, enemyTurns } = scenario.multiTurn;
+
+  if (capturedPiece?.name === "King" && capturedPiece.player === "Black") {
+    gameOver = true;
+    alert(scenario.winMessage);
+    return;
+  }
+
+  practicePlayerMoves += 1;
+
+  if (practicePlayerMoves >= moveLimit) {
+    alert(scenario.lossMessage);
+    loadPracticeScenario(activePractice);
+    return;
+  }
+
+  const enemyTurn = enemyTurns[practicePlayerMoves - 1];
+  if (enemyTurn) {
+    scheduleMultiTurnPracticeEnemyMove(enemyTurn, practicePlayerMoves);
+  }
+}
+
+function resolvePracticeMove(destinationSquareId, capturedPiece) {
   const scenario = PRACTICE_SCENARIOS[activePractice];
   if (!scenario) {
+    return;
+  }
+
+  if (scenario.multiTurn) {
+    resolveMultiTurnPracticeMove(capturedPiece);
+    return;
+  }
+
+  if (scenario.twoTurn) {
+    resolveTwoTurnPracticeMove(destinationSquareId, capturedPiece);
     return;
   }
 
@@ -665,7 +903,8 @@ function resolvePracticeMove(destinationSquareId) {
     return;
   }
 
-  alert(scenario.lossMessage);
+  const specialLossMessage = scenario.lossSquares?.[destinationSquareId];
+  alert(specialLossMessage ?? scenario.lossMessage);
   loadPracticeScenario(activePractice);
 }
 
@@ -780,17 +1019,23 @@ function handleTwoPlayerSquareClick(square, squareId) {
 function handlePracticeSquareClick(square, squareId) {
   if (pendingMove) {
     if (square.classList.contains("move-target")) {
-      if (pendingMove.piece !== practiceControlledPiece) {
+      if (!isPracticeControlledPiece(pendingMove.piece)) {
         clearMoveHighlights();
         gameAudio.playDeselect();
         return;
       }
 
+      const destinationSquare = squaresById[squareId];
+      const capturedPiece =
+        destinationSquare.piece && destinationSquare.piece !== pendingMove.piece
+          ? destinationSquare.piece
+          : null;
+
       gameAudio.playSlide();
       movePieceToSquare(pendingMove.piece, squareId);
       clearMoveHighlights();
       clearSelection(false);
-      resolvePracticeMove(squareId);
+      resolvePracticeMove(squareId, capturedPiece);
     } else {
       clearMoveHighlights();
       clearSelection(true);
@@ -800,7 +1045,7 @@ function handlePracticeSquareClick(square, squareId) {
 
   if (square.piece) {
     const piece = square.piece;
-    const canControlPiece = piece === practiceControlledPiece;
+    const canControlPiece = isPracticeControlledPiece(piece);
 
     if (selectedSquare === square) {
       clearMoveHighlights();
